@@ -190,26 +190,11 @@ public class LocalizationManager
         }
     }
 
-    /// <summary>
-    ///  Whether the injected sidebar language selector stays visible.
-    /// </summary>
-    public bool ShowSidebarSelector
-    {
-        get => _options.ShowSidebarSelector;
-        set
-        {
-            if (_options.ShowSidebarSelector == value) return;
-            _options.ShowSidebarSelector = value;
-            SaveOptions();
-        }
-    }
-
     private void SaveOptions()
     {
         _settingsHandler.Save(SettingsFileName, _options);
         Logger.Info($"Localization: Settings saved: titles=[gray]{_options.TranslateWindowTitles}[/], " +
-                    $"accessibility=[gray]{_options.TranslateAccessibilityNames}[/], " +
-                    $"sidebar=[gray]{_options.ShowSidebarSelector}[/].");
+                    $"accessibility=[gray]{_options.TranslateAccessibilityNames}[/].");
     }
 
     private static List<TranslationPattern> BuildPatterns(IReadOnlyDictionary<string, string> strings)
@@ -322,8 +307,4 @@ public class LocalizationSettings
     /// </summary>
     public bool TranslateAccessibilityNames { get; set; } = false;
 
-    /// <summary>
-    ///  Whether the injected language selector stays visible in the sidebar.
-    /// </summary>
-    public bool ShowSidebarSelector { get; set; } = true;
 }

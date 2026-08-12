@@ -16,8 +16,7 @@ plugin code.
 - Translation of Avalonia text, headers, content, tooltips, window titles, and accessibility names.
 - Translation of ETS2LA's bottom-right Growl notifications, including dynamic notification text.
 - Automatic processing of newly opened windows and dynamically created controls.
-- A language selector in the ETS2LA sidebar.
-- A dedicated Localization page in the ETS2LA Settings view.
+- A dedicated Localization page in the ETS2LA Settings view with the language selector.
 - An embedded plugin icon based on ETS2LA's `ETS2LA/Assets/Installer/favicon.ico`.
 - Headless translation, injection, and plugin-loading test tools.
 
@@ -77,7 +76,6 @@ submodule, the supported version, and the compatibility notes together.
 │       ├── Program.cs                        # Plugin lifecycle and settings page
 │       ├── UiTranslator.cs                    # Avalonia UI translation
 │       ├── NotificationTranslator.cs         # Bottom-right notification translation
-│       ├── LanguageSelector.cs                # Sidebar language selector
 │       ├── SettingsPageInjector.cs            # Settings-page injection
 │       └── Assets/favicon.ico                 # Embedded plugin icon
 ├── Tools/
@@ -236,13 +234,13 @@ started manually from the GitHub Actions page. It performs the following steps:
 5. Packages the library and plugin DLLs into a versioned ZIP archive.
 6. Creates or updates a GitHub Release and its version tag.
 
-The release version is read from `VERSION`. The current version is `1.1.2`, so the workflow uses
-the tag `v1.1.2` and the archive name `ets2la-i18n-v1.1.2.zip`. `RELEASE_NOTES.md` is used as the
+The release version is read from `VERSION`. The current version is `1.1.3`, so the workflow uses
+the tag `v1.1.3` and the archive name `ets2la-i18n-v1.1.3.zip`. `RELEASE_NOTES.md` is used as the
 release body.
 
 To publish a new release:
 
-1. Update `VERSION` to the next semantic version, for example `1.1.3`.
+1. Update `VERSION` to the next semantic version, for example `1.1.4`.
 2. Update `RELEASE_NOTES.md` with the changes for that version.
 3. Update the plugin `Version` in `Plugins/Localization/Program.cs` if the displayed plugin
    version should change.
@@ -257,8 +255,7 @@ token. Reusing an existing version updates its release asset instead of creating
 1. Start ETS2LA and open the Plugin Manager.
 2. Enable the `Localization` plugin. Its library dependency,
    `srlily.i18n.library`, must be available first.
-3. Open the injected language selector in the sidebar or open the `Localization` tab under
-   Settings.
+3. Open the `Localization` tab under Settings.
 4. Select `Chinese (Simplified) (简体中文)`.
 5. The interface and active bottom-right notifications are retranslated immediately.
 
@@ -268,7 +265,6 @@ The selected language is saved in ETS2LA's configuration directory as
 - `LanguageCode`: selected BCP-47 language code.
 - `TranslateWindowTitles`: whether window titles are translated.
 - `TranslateAccessibilityNames`: whether accessibility names are translated.
-- `ShowSidebarSelector`: whether the sidebar selector is visible.
 
 ## Adding a Language
 
@@ -357,7 +353,7 @@ errors in the localization projects should be investigated.
 
 - Confirm that both `srlily.i18n.library.dll` and `srlily.i18n.dll` are installed.
 - Confirm that the plugin is enabled in the Plugin Manager.
-- Confirm that `zh-CN` is selected in the language selector.
+- Confirm that `zh-CN` is selected in the `Localization` Settings page.
 - Restart ETS2LA after replacing DLLs; loaded assemblies are not replaced in the current process.
 
 ### The plugin does not appear

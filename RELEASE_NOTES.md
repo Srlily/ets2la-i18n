@@ -1,22 +1,20 @@
-# ETS2LA Localization v1.1.2 / ETS2LA 本地化 v1.1.2
+# ETS2LA Localization v1.1.3 / ETS2LA 本地化 v1.1.3
 
-## Fixes / 修复
+## Changes / 更新
 
-- Restores translated UI text when the localization plugin is disabled.
-  关闭本地化插件后会恢复界面原始文本，移除相关通知翻译。
-- Removes the injected sidebar language selector and Settings Localization tab on disable.
-  插件关闭时会移除侧边栏语言选择器和设置页中的本地化选项卡。
-- Keeps the plugin instance available across disable and re-enable cycles.
-  修复插件重新启用后本地化设置页面无法打开的问题。
-- Reattaches the language selector and Settings Localization tab when the plugin is enabled again.
-  插件重新启用后会重新挂载语言选择器和本地化设置页面。
-- Clears the injected tab's selected state when another Settings page or main page is selected.
-  切换到其他设置页面或主页面时，会取消本地化选项卡的选中状态。
+- Removed the language selector from the left sidebar.
+  移除左侧菜单栏中的语言切换控件。
+- Language switching is now available only in the `Localization` page under Settings.
+  语言切换现在仅保留在设置页面的 `Localization` 选项卡中。
+- Removed the unused sidebar-selector implementation and persisted option.
+  删除不再使用的侧边栏选择器代码和配置项。
+- Kept plugin enable/disable cleanup and Settings page lifecycle fixes from v1.1.2.
+  保留 v1.1.2 中的插件启停清理和设置页面生命周期修复。
 
 ## Compatibility / 兼容性
 
 - ETS2LA: `v3.4.37`
-- Plugin version: `1.1.2`
+- Plugin version: `1.1.3`
 - Language pack: Simplified Chinese (`zh-CN`)
 
 ## Package Contents / 发布包内容

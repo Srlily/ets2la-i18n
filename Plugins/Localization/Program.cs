@@ -27,7 +27,7 @@ public class Localization : Plugin, IPluginUi
     public override PluginInformation Info => new PluginInformation
     {
         Id = "srlily.i18n",
-        Version = "1.1.2",
+        Version = "1.1.3",
         Name = "Localization",
         Description = "Translates the ETS2LA interface into your language. Ships with 简体中文 (Simplified Chinese).",
         AuthorName = "Srlily",
@@ -80,7 +80,6 @@ public class Localization : Plugin, IPluginUi
         {
             UiTranslator.RestoreAllWindows();
             _notificationTranslator.Stop();
-            LanguageSelector.Detach();
             SettingsPageInjector.Detach();
         });
     }
@@ -103,7 +102,6 @@ public class Localization : Plugin, IPluginUi
         // Runs on the UI thread (published by the main window's Opened event).
         foreach (var window in UiTranslator.GetOpenWindows())
         {
-            LanguageSelector.EnsureAttached(window);
             UiTranslator.TranslateWindow(window);
         }
         _notificationTranslator.ApplyAll();
@@ -146,7 +144,6 @@ public class Localization : Plugin, IPluginUi
                 return;
 
             ApplyCurrentLanguage();
-            LanguageSelector.Sync();
             SettingsPageInjector.RefreshIfVisible();
         });
     }
@@ -203,11 +200,7 @@ public class Localization : Plugin, IPluginUi
         if (!_enabled)
             return;
 
-        foreach (var window in UiTranslator.GetOpenWindows())
-        {
-            LanguageSelector.EnsureAttached(window);
-            UiTranslator.TranslateWindow(window);
-        }
+        UiTranslator.TranslateAllWindows();
         _notificationTranslator.ApplyAll();
     }
 

@@ -37,14 +37,14 @@ manifest_file, lib_dll, plugin_dll = sys.argv[1], sys.argv[2], sys.argv[3]
 entries = {
     "srlily.i18n.library": {
         "Id": "srlily.i18n.library",
-        "Version": "1.1.2",
+        "Version": "1.1.3",
         "DllPath": lib_dll,
         "Dependencies": [],
         "Type": 1,
     },
     "srlily.i18n": {
         "Id": "srlily.i18n",
-        "Version": "1.1.2",
+        "Version": "1.1.3",
         "DllPath": plugin_dll,
         "Dependencies": ["srlily.i18n.library"],
         "Type": 0,
