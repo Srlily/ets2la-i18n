@@ -1,0 +1,122 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-release-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build and publish
+    runs-on: ubuntu-latest
+    env:
+      DOTNET_NOLOGO: true
+
+    steps:
+      - name: Check out repository and submodules
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.x
+
+      - name: Read release version
+        id: version
+        shell: bash
+        run: |
+          version="$(tr -d '[:space:]' < VERSION)"
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "VERSION must contain a semantic version such as 1.1.0" >&2
+            exit 1
+          fi
+
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=v$version" >> "$GITHUB_OUTPUT"
+
+      - name: Restore localization plugin
+        run: dotnet restore Plugins/Localization/Localization.csproj
+
+      - name: Restore translation tests
+        run: dotnet restore Tools/TranslationTest/TranslationTest.csproj
+
+      - name: Build localization plugin
+        run: dotnet build Plugins/Localization/Localization.csproj --configuration Release --no-restore
+
+      - name: Run translation tests
+        run: dotnet run --project Tools/TranslationTest/TranslationTest.csproj --configuration Release --no-restore
+
+      - name: Create release package
+        id: package
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        shell: bash
+        run: |
+          package_root="$RUNNER_TEMP/ets2la-i18n"
+          archive="$GITHUB_WORKSPACE/ets2la-i18n-v${VERSION}.zip"
+
+          mkdir -p "$package_root/Libraries/srlily.i18n.library"
+          mkdir -p "$package_root/Plugins/srlily.i18n"
+
+          cp Libraries/LocalizationLibrary/bin/Release/net10.0/srlily.i18n.library.dll \
+            "$package_root/Libraries/srlily.i18n.library/srlily.i18n.library.dll"
+          cp Plugins/Localization/bin/Release/net10.0/srlily.i18n.dll \
+            "$package_root/Plugins/srlily.i18n/srlily.i18n.dll"
+          cp README.md LICENSE VERSION RELEASE_NOTES.md "$package_root/"
+
+          python3 - "$package_root" "$archive" <<'PY'
+          from pathlib import Path
+          import sys
+          import zipfile
+
+          package_root = Path(sys.argv[1])
+          archive = Path(sys.argv[2])
+          with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as bundle:
+              for path in package_root.rglob("*"):
+                  if path.is_file():
+                      bundle.write(path, path.relative_to(package_root))
+          PY
+          echo "archive=$archive" >> "$GITHUB_OUTPUT"
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ets2la-i18n-v${{ steps.version.outputs.version }}
+          path: ${{ steps.package.outputs.archive }}
+          if-no-files-found: error
+
+      - name: Create or update GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+          ARCHIVE: ${{ steps.package.outputs.archive }}
+        shell: bash
+        run: |
+          title="ETS2LA Localization ${TAG}"
+
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release edit "$TAG" \
+              --repo "$GITHUB_REPOSITORY" \
+              --title "$title" \
+              --notes-file RELEASE_NOTES.md
+            gh release upload "$TAG" "$ARCHIVE" \
+              --repo "$GITHUB_REPOSITORY" \
+              --clobber
+          else
+            gh release create "$TAG" "$ARCHIVE" \
+              --repo "$GITHUB_REPOSITORY" \
+              --target "$GITHUB_SHA" \
+              --title "$title" \
+              --notes-file RELEASE_NOTES.md
+          fi

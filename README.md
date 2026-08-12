@@ -83,7 +83,10 @@ changes those interfaces, rebuild and test the plugin against the new submodule 
 │   ├── TranslationTest/                     # Translation and placeholder checks
 │   ├── InjectTest/                          # Headless Settings-tab injection test
 │   └── LoadTest/                            # Plugin load and enable test
-├── dist/                                    # Catalogue-style built DLLs
+├── dist/                                    # Ignored local package staging directory
+├── VERSION                                  # Release version used by GitHub Actions
+├── RELEASE_NOTES.md                         # Release body for the current version
+├── .github/workflows/build-release.yml      # CI build and release workflow
 ├── Localization.sln                         # Main solution
 ├── BuildYourPlugins.sh/.bat                  # Build and install plugin DLLs
 ├── InstallPlugins.sh/.bat/.ps1               # Install top-level DLLs for manual scanning
@@ -127,11 +130,15 @@ Libraries/LocalizationLibrary/bin/Release/net10.0/srlily.i18n.library.dll
 Plugins/Localization/bin/Release/net10.0/srlily.i18n.dll
 ```
 
-The `dist/` directory uses the catalogue-style layout expected by ETS2LA:
+The `dist/` directory is generated locally and is intentionally not committed. When a local
+catalogue-style package is needed, create it after building Release:
 
-```text
-dist/Libraries/srlily.i18n.library/srlily.i18n.library.dll
-dist/Plugins/srlily.i18n/srlily.i18n.dll
+```bash
+mkdir -p dist/Libraries/srlily.i18n.library dist/Plugins/srlily.i18n
+cp Libraries/LocalizationLibrary/bin/Release/net10.0/srlily.i18n.library.dll \
+  dist/Libraries/srlily.i18n.library/srlily.i18n.library.dll
+cp Plugins/Localization/bin/Release/net10.0/srlily.i18n.dll \
+  dist/Plugins/srlily.i18n/srlily.i18n.dll
 ```
 
 The icon is compiled into `srlily.i18n.dll` as an Avalonia resource, so it remains available
@@ -146,8 +153,9 @@ when ETS2LA loads the plugin from its shadow-copy directory.
 ./BuildYourPlugins.sh
 ```
 
-For a production-style build, build Release first and copy the resulting DLLs to the matching
-catalogue directories under `dist/` or your ETS2LA data directory.
+For a production-style local install, copy the resulting DLLs to the matching catalogue
+directories under `dist/` or directly to your ETS2LA data directory. The GitHub Actions workflow
+packages the same files automatically and does not require `dist/` to be committed.
 
 ### Build and Install on Windows
 
@@ -166,8 +174,8 @@ same plugin twice.
 
 ### Manual Top-Level Scan
 
-The manual scanner looks only for DLLs directly inside `Plugins/` and `Libraries/`. Install the
-current files from `dist/` into an ETS2LA data root:
+The manual scanner looks only for DLLs directly inside `Plugins/` and `Libraries/`. After creating
+the ignored local `dist/` package described above, install its files into an ETS2LA data root:
 
 Linux:
 
@@ -214,6 +222,34 @@ Plugins/srlily.i18n/srlily.i18n.dll
 
 Do not use `RegisterPlugins` and `InstallPlugins` simultaneously. The first uses the manifest and
 the second uses the top-level manual scan.
+
+## Continuous Integration and Releases
+
+The workflow at `.github/workflows/build-release.yml` runs on every push to `main` and can also be
+started manually from the GitHub Actions page. It performs the following steps:
+
+1. Checks out ETS2LA and all submodules.
+2. Installs the .NET 10 SDK.
+3. Restores and builds the localization plugin in Release configuration.
+4. Runs `Tools/TranslationTest`.
+5. Packages the library and plugin DLLs into a versioned ZIP archive.
+6. Creates or updates a GitHub Release and its version tag.
+
+The release version is read from `VERSION`. The current version is `1.1.0`, so the workflow uses
+the tag `v1.1.0` and the archive name `ets2la-i18n-v1.1.0.zip`. `RELEASE_NOTES.md` is used as the
+release body.
+
+To publish a new release:
+
+1. Update `VERSION` to the next semantic version, for example `1.1.1`.
+2. Update `RELEASE_NOTES.md` with the changes for that version.
+3. Update the plugin `Version` in `Plugins/Localization/Program.cs` if the displayed plugin
+   version should change.
+4. Commit and push to `main`.
+
+The workflow creates the corresponding `v<version>` tag using the repository's GitHub Actions
+token. Reusing an existing version updates its release asset instead of creating a second tag.
+`dist/` remains ignored; built DLLs are available from the GitHub Release asset.
 
 ## Using the Plugin
 
