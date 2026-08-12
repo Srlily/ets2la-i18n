@@ -16,6 +16,8 @@ var checks = new Dictionary<string, string>
     ["on"] = "开启",
     ["Off"] = "关闭",
     ["On"] = "开启",
+    ["Match Game"] = "匹配游戏",
+    ["Overlay Interaction"] = "覆盖层交互",
     ["Couldn't connect to the game. Please open ETS2 or ATS and enable the SDK."] = "无法连接到游戏。请打开 ETS2 或 ATS 并启用 SDK。",
 };
 

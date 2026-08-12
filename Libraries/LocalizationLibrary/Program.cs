@@ -7,10 +7,10 @@ public class LocalizationLibrary : LibraryPlugin
     public override PluginInformation Info => new PluginInformation
     {
         Id = "srlily.i18n.library",
-        Version = "1.0.0",
+        Version = "1.1.1",
         Name = "LocalizationLibrary",
         Description = "Translation engine for ETS2LA. Loads language packs and translates UI strings.",
         AuthorName = "Srlily",
-        SupportedETS2LA = "*",
+        SupportedETS2LA = "3.4.37",
     };
 }

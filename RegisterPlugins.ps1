@@ -12,14 +12,14 @@ $manifestFile = Join-Path $manifestDir 'InstalledPluginManifest.json'
 $entries = @(
     [PSCustomObject]@{
         Id           = 'srlily.i18n.library'
-        Version      = '1.0.0'
+        Version      = '1.1.1'
         DllPath      = (Join-Path $Root "Libraries\srlily.i18n.library\srlily.i18n.library.dll")
         Dependencies = @()
         Type         = 1
     },
     [PSCustomObject]@{
         Id           = 'srlily.i18n'
-        Version      = '1.0.0'
+        Version      = '1.1.1'
         DllPath      = (Join-Path $Root "Plugins\srlily.i18n\srlily.i18n.dll")
         Dependencies = @('srlily.i18n.library')
         Type         = 0

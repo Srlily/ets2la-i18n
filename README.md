@@ -54,9 +54,10 @@ making controls unusable or hiding important error information.
 - Git with submodule support when building from a fresh clone.
 - Python 3 only for the optional manifest helper scripts.
 
-The plugin declares support for all ETS2LA versions (`SupportedETS2LA = "*"`), but the compiled
-plugin still depends on the ETS2LA interfaces referenced by the checked-out submodule. If ETS2LA
-changes those interfaces, rebuild and test the plugin against the new submodule revision.
+The plugin currently targets the latest official ETS2LA release, `v3.4.37`
+(`SupportedETS2LA = "3.4.37"`). The compiled plugin also depends on the ETS2LA interfaces
+referenced by the checked-out submodule. When ETS2LA publishes a newer release, update the
+submodule, the supported version, and the compatibility notes together.
 
 ## Repository Layout
 
@@ -235,13 +236,13 @@ started manually from the GitHub Actions page. It performs the following steps:
 5. Packages the library and plugin DLLs into a versioned ZIP archive.
 6. Creates or updates a GitHub Release and its version tag.
 
-The release version is read from `VERSION`. The current version is `1.1.0`, so the workflow uses
-the tag `v1.1.0` and the archive name `ets2la-i18n-v1.1.0.zip`. `RELEASE_NOTES.md` is used as the
+The release version is read from `VERSION`. The current version is `1.1.1`, so the workflow uses
+the tag `v1.1.1` and the archive name `ets2la-i18n-v1.1.1.zip`. `RELEASE_NOTES.md` is used as the
 release body.
 
 To publish a new release:
 
-1. Update `VERSION` to the next semantic version, for example `1.1.1`.
+1. Update `VERSION` to the next semantic version, for example `1.1.2`.
 2. Update `RELEASE_NOTES.md` with the changes for that version.
 3. Update the plugin `Version` in `Plugins/Localization/Program.cs` if the displayed plugin
    version should change.

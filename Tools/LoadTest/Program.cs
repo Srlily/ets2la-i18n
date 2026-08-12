@@ -46,7 +46,7 @@ manifest.InstalledPlugins.RemoveAll(p => p.Id == "srlily.i18n" || p.Id == "srlil
 manifest.InstalledPlugins.Add(new InstalledPlugin
 {
     Id = "srlily.i18n.library",
-    Version = "1.0.0",
+    Version = "1.1.1",
     DllPath = Path.Combine(librariesDir, "srlily.i18n.library.dll"),
     Dependencies = new List<string>(),
     Type = PluginType.Library
@@ -54,7 +54,7 @@ manifest.InstalledPlugins.Add(new InstalledPlugin
 manifest.InstalledPlugins.Add(new InstalledPlugin
 {
     Id = "srlily.i18n",
-    Version = "1.0.0",
+    Version = "1.1.1",
     DllPath = Path.Combine(pluginsDir, "srlily.i18n.dll"),
     Dependencies = new List<string> { "srlily.i18n.library" },
     Type = PluginType.Plugin

@@ -26,11 +26,11 @@ public class Localization : Plugin, IPluginUi
     public override PluginInformation Info => new PluginInformation
     {
         Id = "srlily.i18n",
-        Version = "1.1.0",
+        Version = "1.1.1",
         Name = "Localization",
         Description = "Translates the ETS2LA interface into your language. Ships with 简体中文 (Simplified Chinese).",
         AuthorName = "Srlily",
-        SupportedETS2LA = "*",
+        SupportedETS2LA = "3.4.37",
         Icon = "avares://srlily.i18n/Assets/favicon.ico",
         Dependencies = new List<string>
         {
