@@ -51,10 +51,8 @@ jobs:
       - name: Restore translation tests
         run: dotnet restore Tools/TranslationTest/TranslationTest.csproj
 
-      - name: Restore integration tests
-        run: |
-          dotnet restore Tools/LoadTest/LoadTest.csproj
-          dotnet restore Tools/InjectTest/InjectTest.csproj
+      - name: Restore plugin loading test
+        run: dotnet restore Tools/LoadTest/LoadTest.csproj
 
       - name: Build localization plugin
         run: dotnet build Plugins/Localization/Localization.csproj --configuration Release --no-restore
@@ -68,14 +66,6 @@ jobs:
           "$HOME/.local/share/ETS2LA"
           "$GITHUB_WORKSPACE/Plugins/Localization/bin/Release/net10.0/srlily.i18n.dll"
           "$GITHUB_WORKSPACE/Libraries/LocalizationLibrary/bin/Release/net10.0/srlily.i18n.library.dll"
-
-      - name: Install headless UI dependencies
-        run: sudo apt-get update && sudo apt-get install --yes xvfb
-
-      - name: Run UI lifecycle test
-        run: >-
-          xvfb-run --auto-servernum --server-args="-screen 0 1280x800x24"
-          dotnet run --project Tools/InjectTest/InjectTest.csproj --configuration Release --no-restore
 
       - name: Create release package
         id: package

@@ -232,7 +232,7 @@ started manually from the GitHub Actions page. It performs the following steps:
 1. Checks out ETS2LA and all submodules.
 2. Installs the .NET 10 SDK.
 3. Restores and builds the localization plugin in Release configuration.
-4. Runs translation, plugin-loading, and UI lifecycle tests.
+4. Runs translation and plugin-loading tests.
 5. Packages the library and plugin DLLs into a versioned ZIP archive.
 6. Creates or updates a GitHub Release and its version tag.
 
