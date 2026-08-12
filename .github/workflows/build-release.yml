@@ -69,8 +69,13 @@ jobs:
           "$GITHUB_WORKSPACE/Plugins/Localization/bin/Release/net10.0/srlily.i18n.dll"
           "$GITHUB_WORKSPACE/Libraries/LocalizationLibrary/bin/Release/net10.0/srlily.i18n.library.dll"
 
+      - name: Install headless UI dependencies
+        run: sudo apt-get update && sudo apt-get install --yes xvfb
+
       - name: Run UI lifecycle test
-        run: dotnet run --project Tools/InjectTest/InjectTest.csproj --configuration Release --no-restore
+        run: >-
+          xvfb-run --auto-servernum --server-args="-screen 0 1280x800x24"
+          dotnet run --project Tools/InjectTest/InjectTest.csproj --configuration Release --no-restore
 
       - name: Create release package
         id: package
