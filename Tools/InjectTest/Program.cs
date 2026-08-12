@@ -117,6 +117,9 @@ if (injectedButton != null)
     Check(injectedButton.Classes.Contains("Selected"), "Injected button marked Selected");
     Check(view.FindControl<Button>("DisplayButton")?.Classes.Contains("Selected") != true, "Native button deselected");
 
+    SettingsPageInjector.HandlePageSwitched("Settings.Display");
+    Check(!injectedButton.Classes.Contains("Selected"), "Injected button deselected when native page is selected");
+
     if (content is ScrollViewer { Content: StackPanel stack })
     {
         var texts = stack.GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text).ToList();
@@ -127,6 +130,23 @@ if (injectedButton != null)
     else
     {
         Check(false, "Page structure check ran");
+    }
+
+    if (plugin is IPluginUi loadedPlugin)
+    {
+        SettingsPageInjector.Detach();
+        Check(FindInjectedButton() == null, "Injected button removed when injector is detached");
+        Check(contentHost?.Content == null, "Injected page removed when injector is detached");
+
+        SettingsPageInjector.PluginInstanceProvider = () => loadedPlugin;
+        SettingsPageInjector.InjectInto(view);
+        var reattachedButton = FindInjectedButton();
+        Check(reattachedButton != null, "Injected button can be attached again");
+        if (reattachedButton != null)
+        {
+            reattachedButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            Check(contentHost?.Content is ScrollViewer, "Reattached button opens the localization page");
+        }
     }
 }
 

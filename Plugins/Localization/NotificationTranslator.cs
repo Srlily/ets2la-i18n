@@ -40,6 +40,18 @@ internal sealed class NotificationTranslator
         if (!_started)
             return;
 
+        var originals = _originals.ToArray();
+        void RestoreSnapshot()
+        {
+            foreach (var pair in originals)
+                Restore(pair.Key, pair.Value);
+        }
+
+        if (Application.Current != null && !Dispatcher.UIThread.CheckAccess())
+            Dispatcher.UIThread.InvokeAsync(RestoreSnapshot).GetAwaiter().GetResult();
+        else
+            RestoreSnapshot();
+
         NotificationHandler.Current.OnNotificationAdded -= OnNotificationAdded;
         NotificationHandler.Current.OnNotificationUpdated -= OnNotificationUpdated;
         NotificationHandler.Current.OnNotificationRemoved -= OnNotificationRemoved;
@@ -112,6 +124,22 @@ internal sealed class NotificationTranslator
         {
             uiNotification.Item.Title = title;
             uiNotification.Item.Content = content;
+        }
+    }
+
+    private void Restore(string id, NotificationText original)
+    {
+        var uiNotification = UINotificationHandler.Current.ActiveNotifications
+            .FirstOrDefault(notification => notification.Id == id);
+        if (uiNotification == null)
+            return;
+
+        uiNotification.Title = original.Title;
+        uiNotification.Content = original.Content;
+        if (uiNotification.Item != null)
+        {
+            uiNotification.Item.Title = original.Title;
+            uiNotification.Item.Content = original.Content;
         }
     }
 

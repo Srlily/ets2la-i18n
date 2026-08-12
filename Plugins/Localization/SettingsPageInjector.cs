@@ -26,6 +26,7 @@ public static class SettingsPageInjector
     private const string ButtonName = "SrlilyLocalizationButton";
 
     private static SettingsView? _view;
+    private static StackPanel? _group;
     private static Button? _button;
     private static ContentControl? _host;
     private static Control? _rendered;
@@ -95,6 +96,50 @@ public static class SettingsPageInjector
         {
             Dispatcher.UIThread.Post(TryInjectLater, DispatcherPriority.Background);
         }
+    }
+
+    /// <summary>
+    ///  Keeps the injected button's selected state aligned with native SettingsView
+    ///  navigation. Native navigation does not know about this dynamically added button.
+    /// </summary>
+    public static void HandlePageSwitched(string page)
+    {
+        void UpdateSelection()
+        {
+            if (!string.Equals(page, "Settings.Localization", StringComparison.Ordinal))
+                ClearSelection();
+        }
+
+        if (Application.Current != null && !Dispatcher.UIThread.CheckAccess())
+            Dispatcher.UIThread.Post(UpdateSelection);
+        else
+            UpdateSelection();
+    }
+
+    /// <summary>
+    ///  Removes the injected settings group and any rendered plugin page.
+    /// </summary>
+    public static void Detach()
+    {
+        if (Application.Current != null && !Dispatcher.UIThread.CheckAccess())
+        {
+            Dispatcher.UIThread.InvokeAsync(Detach).GetAwaiter().GetResult();
+            return;
+        }
+
+        if (_host != null && ReferenceEquals(_host.Content, _rendered))
+            _host.Content = null;
+
+        if (_group?.Parent is Panel sidebar)
+            sidebar.Children.Remove(_group);
+
+        _button?.Classes.Remove("Selected");
+        _view = null;
+        _group = null;
+        _button = null;
+        _host = null;
+        _rendered = null;
+        _retries = 0;
     }
 
     /// <summary>
@@ -173,6 +218,7 @@ public static class SettingsPageInjector
         sidebar.Children.Insert(index + 1, group);
 
         _view = view;
+        _group = group;
         _host = view.FindControl<ContentControl>("ContentHost");
         ETS2LA.Logging.Logger.Info("Localization: Injected the Settings tab.");
     }
@@ -199,6 +245,8 @@ public static class SettingsPageInjector
 
     private static void SelectButton()
     {
+        _button?.Classes.Remove("Selected");
+
         if (_button?.Parent?.Parent is not StackPanel sidebar)
             return;
 
@@ -208,6 +256,11 @@ public static class SettingsPageInjector
         }
 
         _button.Classes.Add("Selected");
+    }
+
+    private static void ClearSelection()
+    {
+        _button?.Classes.Remove("Selected");
     }
 
     private static T WithColumn<T>(this T control, int column) where T : Control

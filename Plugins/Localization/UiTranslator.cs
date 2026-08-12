@@ -6,6 +6,7 @@ using Avalonia.Controls.Documents;
 using Avalonia.Controls.Presenters;
 using Avalonia.Controls.Primitives;
 using Avalonia.LogicalTree;
+using Avalonia.Threading;
 using Avalonia.VisualTree;
 using System.Runtime.CompilerServices;
 
@@ -46,6 +47,13 @@ public static class UiTranslator
 
     private static readonly ConditionalWeakTable<Control, ControlState> _controlStates = new();
     private static readonly ConditionalWeakTable<Run, ValueState> _inlineStates = new();
+    private static bool _enabled;
+    private static bool _restoring;
+
+    public static void SetEnabled(bool enabled)
+    {
+        _enabled = enabled;
+    }
 
     /// <summary>
     ///  All currently open windows.
@@ -63,6 +71,9 @@ public static class UiTranslator
     /// </summary>
     public static void TranslateAllWindows()
     {
+        if (!_enabled)
+            return;
+
         foreach (var window in GetOpenWindows())
             TranslateWindow(window);
     }
@@ -72,6 +83,9 @@ public static class UiTranslator
     /// </summary>
     public static void TranslateWindow(Window window)
     {
+        if (!_enabled)
+            return;
+
         TranslateTitle(window);
 
         foreach (var visual in window.GetVisualDescendants())
@@ -81,6 +95,46 @@ public static class UiTranslator
         // being visual descendants of the window (especially while a popup opens).
         foreach (var logical in window.GetLogicalDescendants().OfType<Visual>())
             TranslateControl(logical);
+    }
+
+    /// <summary>
+    ///  Restores the original source values before the plugin is disabled. Property
+    ///  change hooks remain attached to live controls, so restoration is guarded from
+    ///  immediately translating the values back into the selected language.
+    /// </summary>
+    public static void RestoreAllWindows()
+    {
+        if (Application.Current != null && !Dispatcher.UIThread.CheckAccess())
+        {
+            Dispatcher.UIThread.InvokeAsync(RestoreAllWindows).GetAwaiter().GetResult();
+            return;
+        }
+
+        _restoring = true;
+        try
+        {
+            foreach (var window in GetOpenWindows())
+                RestoreWindow(window);
+        }
+        finally
+        {
+            _restoring = false;
+        }
+    }
+
+    private static void RestoreWindow(Window window)
+    {
+        RestoreValue(
+            window,
+            TranslationSlot.WindowTitle,
+            window.Title ?? string.Empty,
+            original => window.SetCurrentValue(Window.TitleProperty, original));
+
+        foreach (var visual in window.GetVisualDescendants())
+            RestoreControl(visual);
+
+        foreach (var logical in window.GetLogicalDescendants().OfType<Visual>())
+            RestoreControl(logical);
     }
 
     private static void TranslateTitle(Window window)
@@ -99,6 +153,9 @@ public static class UiTranslator
 
     private static void TranslateControl(Visual visual)
     {
+        if (!_enabled)
+            return;
+
         var manager = LocalizationManager.Current;
 
         if (visual is TextBlock textBlock)
@@ -187,6 +244,9 @@ public static class UiTranslator
 
     private static void TranslateInline(Inline inline)
     {
+        if (!_enabled)
+            return;
+
         if (inline is Run run && !string.IsNullOrEmpty(run.Text))
         {
             var state = _inlineStates.GetValue(run, _ => new ValueState());
@@ -205,6 +265,122 @@ public static class UiTranslator
             foreach (var child in span.Inlines)
                 TranslateInline(child);
         }
+    }
+
+    private static void RestoreControl(Visual visual)
+    {
+        if (visual is TextBlock textBlock)
+        {
+            RestoreValue(
+                textBlock,
+                TranslationSlot.Text,
+                textBlock.Text ?? string.Empty,
+                original => textBlock.SetCurrentValue(TextBlock.TextProperty, original));
+
+            if (textBlock.Inlines is { } inlines)
+            {
+                foreach (var inline in inlines)
+                    RestoreInline(inline);
+            }
+        }
+        else if (visual is TextBox textBox)
+        {
+            RestoreValue(
+                textBox,
+                TranslationSlot.Placeholder,
+                textBox.PlaceholderText ?? string.Empty,
+                original => textBox.SetCurrentValue(TextBox.PlaceholderTextProperty, original));
+        }
+        else if (visual is MenuItem menuItem && menuItem.Header is string menuHeader)
+        {
+            RestoreValue(
+                menuItem,
+                TranslationSlot.Header,
+                menuHeader,
+                original => menuItem.SetCurrentValue(HeaderedContentControl.HeaderProperty, original));
+        }
+        else if (visual is HeaderedContentControl headered && headered.Header is string header)
+        {
+            RestoreValue(
+                headered,
+                TranslationSlot.Header,
+                header,
+                original => headered.SetCurrentValue(HeaderedContentControl.HeaderProperty, original));
+        }
+        else if (visual is ContentPresenter presenter && presenter.Content is string presenterContent)
+        {
+            RestoreValue(
+                presenter,
+                TranslationSlot.Content,
+                presenterContent,
+                original => presenter.SetCurrentValue(ContentPresenter.ContentProperty, original));
+        }
+        else if (visual is ContentControl contentControl && contentControl.Content is string content)
+        {
+            RestoreValue(
+                contentControl,
+                TranslationSlot.Content,
+                content,
+                original => contentControl.SetCurrentValue(ContentControl.ContentProperty, original));
+        }
+
+        if (visual is not Control control)
+            return;
+
+        var toolTip = ToolTip.GetTip(control);
+        if (toolTip is string tip)
+        {
+            RestoreValue(
+                control,
+                TranslationSlot.ToolTip,
+                tip,
+                original => control.SetCurrentValue(ToolTip.TipProperty, original));
+        }
+
+        var automationName = AutomationProperties.GetName(control);
+        RestoreValue(
+            control,
+            TranslationSlot.AutomationName,
+            automationName ?? string.Empty,
+            original => control.SetCurrentValue(AutomationProperties.NameProperty, original));
+    }
+
+    private static void RestoreInline(Inline inline)
+    {
+        if (inline is Run run && !string.IsNullOrEmpty(run.Text)
+            && _inlineStates.TryGetValue(run, out var state)
+            && state.HasValue
+            && run.Text == state.LastTranslated
+            && run.Text != state.Original)
+        {
+            state.LastTranslated = state.Original;
+            run.SetCurrentValue(Run.TextProperty, state.Original);
+        }
+
+        if (inline is Span span)
+        {
+            foreach (var child in span.Inlines)
+                RestoreInline(child);
+        }
+    }
+
+    private static void RestoreValue(
+        Control control,
+        TranslationSlot slot,
+        string current,
+        Action<string> restore)
+    {
+        if (!_controlStates.TryGetValue(control, out var controlState)
+            || !controlState.Values.TryGetValue(slot, out var state)
+            || !state.HasValue
+            || current != state.LastTranslated
+            || current == state.Original)
+        {
+            return;
+        }
+
+        state.LastTranslated = state.Original;
+        restore(state.Original);
     }
 
     private static void ApplyTranslation(
@@ -249,6 +425,9 @@ public static class UiTranslator
 
     private static void OnControlPropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
     {
+        if (!_enabled || _restoring)
+            return;
+
         if (sender is not Control control)
             return;
 

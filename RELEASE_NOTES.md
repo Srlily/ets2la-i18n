@@ -1,22 +1,22 @@
-# ETS2LA Localization v1.1.1 / ETS2LA 本地化 v1.1.1
+# ETS2LA Localization v1.1.2 / ETS2LA 本地化 v1.1.2
 
-## Highlights / 主要更新
+## Fixes / 修复
 
-- Added Simplified Chinese translations for `Match Game` and `Overlay Interaction`.
-  新增 `Match Game` 和 `Overlay Interaction` 的简体中文翻译。
-- Updated the plugin compatibility target to the latest official ETS2LA release, `v3.4.37`.
-  插件支持版本已更新为 ETS2LA 官方最新版本 `v3.4.37`。
-- Removed generated `dist/` binaries from the Git repository.
-  移除仓库中的生成目录 `dist/`，避免提交构建产物。
-- Kept build output in GitHub Actions and attached the packaged DLLs to the GitHub Release.
-  构建产物改由 GitHub Actions 自动生成，并作为 Release 附件发布。
-- Improved the release workflow and version-driven tag generation.
-  完善自动发布流程，并根据 `VERSION` 自动生成版本标签。
+- Restores translated UI text when the localization plugin is disabled.
+  关闭本地化插件后会恢复界面原始文本，移除相关通知翻译。
+- Removes the injected sidebar language selector and Settings Localization tab on disable.
+  插件关闭时会移除侧边栏语言选择器和设置页中的本地化选项卡。
+- Keeps the plugin instance available across disable and re-enable cycles.
+  修复插件重新启用后本地化设置页面无法打开的问题。
+- Reattaches the language selector and Settings Localization tab when the plugin is enabled again.
+  插件重新启用后会重新挂载语言选择器和本地化设置页面。
+- Clears the injected tab's selected state when another Settings page or main page is selected.
+  切换到其他设置页面或主页面时，会取消本地化选项卡的选中状态。
 
 ## Compatibility / 兼容性
 
 - ETS2LA: `v3.4.37`
-- Plugin version: `1.1.1`
+- Plugin version: `1.1.2`
 - Language pack: Simplified Chinese (`zh-CN`)
 
 ## Package Contents / 发布包内容

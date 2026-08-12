@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Threading;
 using Avalonia.VisualTree;
 
 using LocalizationLibrary;
@@ -60,6 +61,24 @@ public static class LanguageSelector
             return;
 
         _panel.IsVisible = visible;
+    }
+
+    /// <summary>
+    ///  Removes the injected selector when the localization plugin is disabled.
+    /// </summary>
+    public static void Detach()
+    {
+        if (Application.Current != null && !Dispatcher.UIThread.CheckAccess())
+        {
+            Dispatcher.UIThread.InvokeAsync(Detach).GetAwaiter().GetResult();
+            return;
+        }
+
+        if (_panel?.Parent is Panel parent)
+            parent.Children.Remove(_panel);
+
+        _combo = null;
+        _panel = null;
     }
 
     /// <summary>

@@ -232,17 +232,17 @@ started manually from the GitHub Actions page. It performs the following steps:
 1. Checks out ETS2LA and all submodules.
 2. Installs the .NET 10 SDK.
 3. Restores and builds the localization plugin in Release configuration.
-4. Runs `Tools/TranslationTest`.
+4. Runs translation, plugin-loading, and UI lifecycle tests.
 5. Packages the library and plugin DLLs into a versioned ZIP archive.
 6. Creates or updates a GitHub Release and its version tag.
 
-The release version is read from `VERSION`. The current version is `1.1.1`, so the workflow uses
-the tag `v1.1.1` and the archive name `ets2la-i18n-v1.1.1.zip`. `RELEASE_NOTES.md` is used as the
+The release version is read from `VERSION`. The current version is `1.1.2`, so the workflow uses
+the tag `v1.1.2` and the archive name `ets2la-i18n-v1.1.2.zip`. `RELEASE_NOTES.md` is used as the
 release body.
 
 To publish a new release:
 
-1. Update `VERSION` to the next semantic version, for example `1.1.2`.
+1. Update `VERSION` to the next semantic version, for example `1.1.3`.
 2. Update `RELEASE_NOTES.md` with the changes for that version.
 3. Update the plugin `Version` in `Plugins/Localization/Program.cs` if the displayed plugin
    version should change.

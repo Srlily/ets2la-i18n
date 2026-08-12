@@ -22,11 +22,12 @@ public class Localization : Plugin, IPluginUi
 
     private readonly NotificationTranslator _notificationTranslator = new();
     private DispatcherTimer? _translationTimer;
+    private bool _enabled;
 
     public override PluginInformation Info => new PluginInformation
     {
         Id = "srlily.i18n",
-        Version = "1.1.1",
+        Version = "1.1.2",
         Name = "Localization",
         Description = "Translates the ETS2LA interface into your language. Ships with 简体中文 (Simplified Chinese).",
         AuthorName = "Srlily",
@@ -52,6 +53,8 @@ public class Localization : Plugin, IPluginUi
     public override void OnEnable()
     {
         base.OnEnable();
+        _enabled = true;
+        UiTranslator.SetEnabled(true);
         LocalizationManager.Current.LanguageChanged += OnLanguageChanged;
         Events.Current.Subscribe<EventArgs>(WindowOpenedTopic, OnWindowOpened);
         Events.Current.Subscribe<string>(PageSwitchedTopic, OnPageSwitched);
@@ -64,27 +67,39 @@ public class Localization : Plugin, IPluginUi
     public override void OnDisable()
     {
         base.OnDisable();
+        _enabled = false;
+        UiTranslator.SetEnabled(false);
         Events.Current.Unsubscribe<EventArgs>(WindowOpenedTopic, OnWindowOpened);
         Events.Current.Unsubscribe<string>(PageSwitchedTopic, OnPageSwitched);
         Events.Current.Unsubscribe<EventArgs>(SettingsSwitchedTopic, OnSettingsSwitched);
         Events.Current.Unsubscribe<string>(SetLanguageTopic, OnSetLanguageRequest);
         LocalizationManager.Current.LanguageChanged -= OnLanguageChanged;
-        _notificationTranslator.Stop();
         StopTranslationLoop();
-        if (ReferenceEquals(Instance, this))
-            Instance = null;
+
+        RunOnUiThread(() =>
+        {
+            UiTranslator.RestoreAllWindows();
+            _notificationTranslator.Stop();
+            LanguageSelector.Detach();
+            SettingsPageInjector.Detach();
+        });
     }
 
     public override void Shutdown()
     {
         base.Shutdown();
         OnDisable();
+        if (ReferenceEquals(Instance, this))
+            Instance = null;
     }
 
     // --- Events -----------------------------------------------------------
 
     private void OnWindowOpened(EventArgs _)
     {
+        if (!_enabled)
+            return;
+
         // Runs on the UI thread (published by the main window's Opened event).
         foreach (var window in UiTranslator.GetOpenWindows())
         {
@@ -104,10 +119,18 @@ public class Localization : Plugin, IPluginUi
 
     private void OnPageSwitched(string page)
     {
+        if (!_enabled)
+            return;
+
+        SettingsPageInjector.HandlePageSwitched(page);
+
         // Pages are attached to the window after this event, translate them once
         // they are in the tree so newly opened views follow the active language.
         Dispatcher.UIThread.Post(() =>
         {
+            if (!_enabled)
+                return;
+
             foreach (var window in UiTranslator.GetOpenWindows())
                 UiTranslator.TranslateWindow(window);
             SettingsPageInjector.EnsureInjectedSoon();
@@ -119,6 +142,9 @@ public class Localization : Plugin, IPluginUi
         // May be fired from any thread, make sure we touch the UI thread.
         Dispatcher.UIThread.Post(() =>
         {
+            if (!_enabled)
+                return;
+
             ApplyCurrentLanguage();
             LanguageSelector.Sync();
             SettingsPageInjector.RefreshIfVisible();
@@ -169,13 +195,28 @@ public class Localization : Plugin, IPluginUi
         if (Dispatcher.UIThread.CheckAccess())
             Stop();
         else
-            Dispatcher.UIThread.Post(Stop);
+            Dispatcher.UIThread.InvokeAsync(Stop).GetAwaiter().GetResult();
     }
 
     private void ApplyCurrentLanguage()
     {
-        UiTranslator.TranslateAllWindows();
+        if (!_enabled)
+            return;
+
+        foreach (var window in UiTranslator.GetOpenWindows())
+        {
+            LanguageSelector.EnsureAttached(window);
+            UiTranslator.TranslateWindow(window);
+        }
         _notificationTranslator.ApplyAll();
+    }
+
+    private static void RunOnUiThread(Action action)
+    {
+        if (Avalonia.Application.Current == null || Dispatcher.UIThread.CheckAccess())
+            action();
+        else
+            Dispatcher.UIThread.InvokeAsync(action).GetAwaiter().GetResult();
     }
 
     // --- Plugin settings page ----------------------------------------------
